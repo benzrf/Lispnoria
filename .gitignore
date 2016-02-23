@@ -1,4 +1,6 @@
 .*.swp
 __pycache__
 venv
+parsetab.py
+parser.out
 
