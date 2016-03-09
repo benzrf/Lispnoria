@@ -67,6 +67,7 @@ class Lispnoria(callbacks.Plugin):
     def _lispinterpret(self, irc, msg, expr, respond=False):
         try:
             env = self.lisp_env.new_child()
+            env.rec_new(expr)
             p = context.Context(env)
             p.bot_ctx = (self, irc.irc, msg)
             res = p.eval(expr)
@@ -114,7 +115,7 @@ class Lispnoria(callbacks.Plugin):
         try:
             if isinstance(res, vals.LispFunc):
                 res.name = k
-            type(self).lisp_env.add_rec_new(k, res)
+            self.lisp_env.add_rec_new(k, res)
             irc.replySuccess()
         except errs.LimitationError as e:
             irc.error("killed: {}".format(e.message()))
