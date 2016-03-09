@@ -1,10 +1,3 @@
-###
-# Copyright (c) 2016, benzrf
-# All rights reserved.
-#
-#
-###
-
 """
 Lispnoria: Lisp for Limnoria
 """

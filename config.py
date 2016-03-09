@@ -1,10 +1,3 @@
-###
-# Copyright (c) 2016, benzrf
-# All rights reserved.
-#
-#
-###
-
 import supybot.conf as conf
 import supybot.registry as registry
 try:
