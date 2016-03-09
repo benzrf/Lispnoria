@@ -84,6 +84,69 @@ class Lispnoria(callbacks.Plugin):
             irc.error(e.message(), Raise=True)
 
 
+    def lispinterpret(self, irc, msg, args, code):
+        """<code>
+
+        Evaluate a botlisp expression."""
+        expr = self._lispparse(irc, code)
+        self._lispinterpret(irc, msg, expr, respond=True)
+    lispinterpret = wrap(lispinterpret, ['text'])
+
+    def lispinterpretcmd(self, irc, msg, args, code):
+        """<code>
+
+        Run a botlisp command."""
+        expr = self._lispparse(irc, code, mod=botlisp_cmds)
+        self._lispinterpret(irc, msg, expr, respond=True)
+    lispinterpretcmd = wrap(lispinterpretcmd, ['text'])
+
+    def lispinterpretsexpr(self, irc, msg, args, code):
+        """<code>
+
+        Evaluate a sexpr."""
+        expr = self._lispparse(irc, code, mod=sexpr)
+        self._lispinterpret(irc, msg, expr, respond=True)
+    lispinterpretsexpr = wrap(lispinterpretsexpr, ['text'])
+
+    def _lispassign(self, irc, msg, args, k, code, mod=botlisp_expr):
+        expr = self._lispparse(irc, code, mod=mod)
+        res = self._lispinterpret(irc, msg, expr)
+        try:
+            if isinstance(res, vals.LispFunc):
+                res.name = k
+            type(self).lisp_env.add_rec_new(k, res)
+            irc.replySuccess()
+        except errs.LimitationError as e:
+            irc.error("killed: {}".format(e.message()))
+
+    def lispassign(self, *args):
+        """<var> <code>
+
+        Set a variable in the Lisp environment to the result of
+        evaluating a botlisp expression."""
+        self._lispassign(*args)
+    lispassign = wrap(lispassign, ['anything', 'text'])
+
+    def lispassignsexpr(self, *args):
+        """<var> <code>
+
+        Set a variable in the Lisp environment to the result of
+        evaluating a sexpr."""
+        self._lispassign(*args, mod=sexpr)
+    lispassignsexpr = wrap(lispassignsexpr, ['anything', 'text'])
+
+    def lispclear(self, irc, msg, args, k):
+        """<var>
+
+        Delete a variable from the Lisp environment."""
+        if k in self.lisp_env:
+            del self.lisp_env[k]
+            irc.replySuccess()
+        else:
+            irc.error("no such definition")
+    lispclear = wrap(lispclear, ['anything'])
+
+
 Class = Lispnoria
 
 
