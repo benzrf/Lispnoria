@@ -150,9 +150,12 @@ class Lispnoria(callbacks.Plugin):
             for ep in self.registryValue(var + 'Prefixes'):
                 if text.startswith(ep):
                     code = text[len(ep):]
-                    expr = self._lispparse(irc, code, mod=mod)
-                    self._lispinterpret(irc, msg, expr, respond=True)
-                    break
+                    try:
+                        expr = self._lispparse(irc, code, mod=mod)
+                        self._lispinterpret(irc, msg, expr, respond=True)
+                    except callbacks.Error as e:
+                        irc.error(e.args[0])
+                    return
 
     def invalidCommand(self, irc, msg, tokens):
         cmd = tokens[0]
