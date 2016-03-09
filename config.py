@@ -29,6 +29,15 @@ Lispnoria = conf.registerPlugin('Lispnoria')
 # This is where your configuration variables (if any) should go.  For example:
 # conf.registerGlobalValue(Lispnoria, 'someConfigVariableName',
 #     registry.Boolean(False, _("""Help for someConfigVariableName.""")))
+conf.registerChannelValue(Lispnoria, 'exprPrefixes',
+    registry.SpaceSeparatedSetOfStrings(['~~'], "Prefixes for evaluating "
+        "botlisp expressions."))
+conf.registerChannelValue(Lispnoria, 'commandPrefixes',
+    registry.SpaceSeparatedSetOfStrings(['~!'], "Prefixes for running "
+        "botlisp commands."))
+conf.registerChannelValue(Lispnoria, 'sexprPrefixes',
+    registry.SpaceSeparatedSetOfStrings(['~#'], "Prefixes for evaluating "
+        "sexprs."))
 
 
 # vim:set shiftwidth=4 tabstop=4 expandtab textwidth=79:

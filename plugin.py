@@ -148,6 +148,31 @@ class Lispnoria(callbacks.Plugin):
     lispclear = wrap(lispclear, ['anything'])
 
 
+    def doPrivmsg(self, irc, msg):
+        text = msg.args[1]
+        _types = [('expr', botlisp_expr),
+                  ('command', botlisp_cmds),
+                  ('sexpr', sexpr)]
+        for var, mod in _types:
+            for ep in self.registryValue(var + 'Prefixes'):
+                if text.startswith(ep):
+                    code = text[len(ep):]
+                    expr = self._lispparse(irc, code, mod=mod)
+                    self._lispinterpret(irc, msg, expr, respond=True)
+                    break
+
+    def invalidCommand(self, irc, msg, tokens):
+        cmd = tokens[0]
+        if cmd in self.lisp_env:
+            f = self.lisp_env[cmd]
+            if callable(f):
+                qs = vals.LispSymbol('quote')
+                args = [vals.LispList([qs, vals.LispSymbol(t)])
+                    for t in tokens[1:]]
+                expr = vals.LispList([vals.LispSymbol(cmd)] + args)
+                self._lispinterpret(irc, msg, expr, respond=True)
+
+
 Class = Lispnoria
 
 
