@@ -21,8 +21,9 @@ except ImportError:
     _ = lambda x: x
 
 from . import parse
+from .parse import botlisp_expr, botlisp_cmds, sexpr
 from . import parthial_ext
-import parthial
+from parthial import serialize, context, vals, errs
 import yaml
 
 
@@ -35,21 +36,21 @@ class Lispnoria(callbacks.Plugin):
         filename = conf.supybot.directories.data.dirize('lisp_env.yaml')
         try:
             with open(filename, 'r') as f:
-                loader = parthial.serialize.ParthialLoader(bot_globals, f)
+                loader = serialize.ParthialLoader(bot_globals, f)
                 try:
                     self.lisp_env = loader.get_single_data()
                 finally:
                     loader.dispose()
         except FileNotFoundError:
-            self.lisp_env = parthial.context.Environment(bot_globals)
+            self.lisp_env = context.Environment(bot_globals)
         world.flushers.append(self._flush)
 
     def _flush(self):
         filename = conf.supybot.directories.data.dirize('lisp_env.yaml')
         with open(filename, 'w') as f:
-            yaml.dump(self.lisp_env, f, parthial.serialize.ParthialDumper)
+            yaml.dump(self.lisp_env, f, serialize.ParthialDumper)
 
-    def _lispparse(self, irc, code, mod=parse.botlisp_expr):
+    def _lispparse(self, irc, code, mod=botlisp_expr):
         try:
             return parse.parse(code, mod)
         except parse.NoLex as e:
@@ -66,20 +67,20 @@ class Lispnoria(callbacks.Plugin):
     def _lispinterpret(self, irc, msg, expr, respond=False):
         try:
             env = self.lisp_env.new_child()
-            p = parthial.context.Context(env)
+            p = context.Context(env)
             p.bot_ctx = (self, irc.irc, msg)
             res = p.eval(expr)
 
             if not respond: return res
-            if isinstance(res, parthial.vals.LispSymbol):
+            if isinstance(res, vals.LispSymbol):
                 res = res.val
             else:
                 res = str(res)
             if res:
                 irc.reply(res)
-        except parthial.errs.LimitationError as e:
+        except errs.LimitationError as e:
             irc.error("killed: {}".format(e.message()), Raise=True)
-        except parthial.errs.LispError as e:
+        except errs.LispError as e:
             irc.error(e.message(), Raise=True)
 
 
