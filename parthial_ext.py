@@ -1,10 +1,12 @@
 import supybot.callbacks as callbacks
+import supybot.ircutils as ircutils
 from parthial.vals import LispSymbol, LispBuiltin
 from parthial.errs import LimitationError
 from parthial import built_ins
 import re
 
-parseMessage = re.compile('\w+: (?P<content>.*)')
+parseMessage = re.compile('%s: (?P<content>.*)' %
+        ircutils.nickRe.pattern.lstrip('^').rstrip('$'))
 class FakeIrc:
     def __init__(self, irc):
         self._irc = irc
