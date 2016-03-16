@@ -4,6 +4,7 @@ from parthial.vals import LispSymbol, LispBuiltin
 from parthial.errs import LimitationError
 from parthial import built_ins
 import re
+import threading
 
 parseMessage = re.compile('%s: (?P<content>.*)' %
         ircutils.nickRe.pattern.lstrip('^').rstrip('$'))
@@ -13,11 +14,12 @@ class FakeIrc:
         self._message = ''
         self._data = ''
         self._rawData = None
+        self._event = threading.Event()
     def error(self, message):
         message = message
-        self._data = message
+        self._set_data(message)
     def reply(self, message):
-        self._data = message
+        self._set_data(message)
     def queueMsg(self, message):
         self._rawData = message
         if message.command in ('PRIVMSG', 'NOTICE'):
@@ -26,11 +28,12 @@ class FakeIrc:
                 message = parsed.group('content')
             else:
                 message = message.args[1]
-        self._data = message
+        self._set_data(message)
+    def _set_data(self, data):
+        self._data = data
+        self._event.set()
     def __getattr__(self, name):
-        if name == '_data' or name == '_rawData':
-            return self.__dict__[name]
-        return getattr(self.__dict__['_irc'], name)
+        return getattr(self._irc, name)
 
 def lisp_cmd(self, ctx, args):
     for arg, val in enumerate(args):
@@ -40,6 +43,7 @@ def lisp_cmd(self, ctx, args):
     pl, i, m = ctx.bot_ctx
     fakeIrc = FakeIrc(i)
     pl.Proxy(fakeIrc, m, args, nested=getattr(i, 'nested', 0) + 1)
+    fakeIrc._event.wait(10)
 
     res = fakeIrc._data
     if len(res) > 1024:

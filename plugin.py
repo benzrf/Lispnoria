@@ -23,6 +23,8 @@ import yaml
 class Lispnoria(callbacks.Plugin):
     """Lisp for Limnoria"""
 
+    threaded = True
+
     def __init__(self, irc, *args, **kwargs):
         super().__init__(irc, *args, **kwargs)
         bot_globals = parthial_ext.bot_globals(irc)
