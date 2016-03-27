@@ -11,24 +11,22 @@ parseMessage = re.compile('%s: (?P<content>.*)' %
 class FakeIrc:
     def __init__(self, irc):
         self._irc = irc
-        self._message = ''
         self._data = ''
-        self._rawData = None
         self._event = threading.Event()
     def error(self, message):
-        message = message
         self._set_data(message)
     def reply(self, message):
         self._set_data(message)
     def queueMsg(self, message):
-        self._rawData = message
         if message.command in ('PRIVMSG', 'NOTICE'):
             parsed = parseMessage.match(message.args[1])
             if parsed is not None:
-                message = parsed.group('content')
+                data = parsed.group('content')
             else:
-                message = message.args[1]
-        self._set_data(message)
+                data = message.args[1]
+            self._set_data(message)
+        else:
+            self._irc.queueMsg(message)
     def _set_data(self, data):
         self._data = data
         self._event.set()
