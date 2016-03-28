@@ -69,7 +69,7 @@ class Lispnoria(callbacks.Plugin):
             env = self.new_env(irc)
             env.rec_new(expr)
             p = context.Context(env)
-            p.bot_ctx = (self, irc.irc, msg)
+            p.bot_ctx = (self, irc, msg)
             res = p.eval(expr)
 
             if not respond: return res
