@@ -1,5 +1,6 @@
 import supybot.callbacks as callbacks
 import supybot.ircutils as ircutils
+import supybot.ircmsgs as ircmsgs
 from parthial.vals import LispSymbol, LispBuiltin
 from parthial.errs import LimitationError
 from parthial import built_ins
@@ -13,23 +14,26 @@ class FakeIrc:
         self._irc = irc
         self._data = ''
         self._event = threading.Event()
-    def error(self, message):
-        self._set_data(message)
-    def reply(self, message):
-        self._set_data(message)
-    def queueMsg(self, message):
-        if message.command in ('PRIVMSG', 'NOTICE'):
+
+    def _set_data(self, message):
+        if isinstance(message, ircmsgs.IrcMsg) and\
+                message.command in ('PRIVMSG', 'NOTICE'):
             parsed = parseMessage.match(message.args[1])
             if parsed is not None:
-                data = parsed.group('content')
+                message = parsed.group('content')
             else:
-                data = message.args[1]
+                message = message.args[1]
             self._set_data(message)
         else:
             self._irc.queueMsg(message)
-    def _set_data(self, data):
-        self._data = data
+            return
+        self._data = message
         self._event.set()
+
+    error = _set_data
+    reply = _set_data
+    queueMsg = _set_data
+
     def __getattr__(self, name):
         return getattr(self._irc, name)
 
