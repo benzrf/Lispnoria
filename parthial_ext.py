@@ -88,9 +88,8 @@ class CommandGlobals:
         else:
             return self.cmd_exists(k)
 
+underlying = built_ins.default_globals.copy()
+underlying['cmd'] = LispBuiltin(lisp_cmd, 'cmd')
 def bot_globals(irc):
-    original = built_ins.default_globals.copy()
-    bg = CommandGlobals(original, irc)
-    bg['cmd'] = LispBuiltin(lisp_cmd, 'cmd')
-    return bg
+    return CommandGlobals(underlying, irc)
 

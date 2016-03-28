@@ -27,23 +27,28 @@ class Lispnoria(callbacks.Plugin):
 
     def __init__(self, irc, *args, **kwargs):
         super().__init__(irc, *args, **kwargs)
-        bot_globals = parthial_ext.bot_globals(irc)
+        bot_globals = parthial_ext.bot_globals(None)
         filename = conf.supybot.directories.data.dirize('lisp_env.yaml')
         try:
             with open(filename, 'r') as f:
                 loader = serialize.ParthialLoader(bot_globals, f)
                 try:
-                    self.lisp_env = loader.get_single_data()
+                    self._lisp_env = loader.get_single_data()
                 finally:
                     loader.dispose()
         except FileNotFoundError:
-            self.lisp_env = context.Environment(bot_globals)
+            self._lisp_env = context.Environment(bot_globals)
         world.flushers.append(self._flush)
+
+    def new_env(self, irc):
+        env = self._lisp_env.new_child()
+        env.globals = parthial_ext.bot_globals(irc)
+        return env
 
     def _flush(self):
         filename = conf.supybot.directories.data.dirize('lisp_env.yaml')
         with open(filename, 'w') as f:
-            yaml.dump(self.lisp_env, f, serialize.ParthialDumper)
+            yaml.dump(self._lisp_env, f, serialize.ParthialDumper)
 
     def _lispparse(self, irc, code, mod=botlisp_expr):
         try:
@@ -61,7 +66,7 @@ class Lispnoria(callbacks.Plugin):
 
     def _lispinterpret(self, irc, msg, expr, respond=False):
         try:
-            env = self.lisp_env.new_child()
+            env = self.new_env(irc)
             env.rec_new(expr)
             p = context.Context(env)
             p.bot_ctx = (self, irc.irc, msg)
@@ -110,7 +115,7 @@ class Lispnoria(callbacks.Plugin):
         try:
             if isinstance(res, vals.LispFunc):
                 res.name = k
-            self.lisp_env.add_rec_new(k, res)
+            self._lisp_env.add_rec_new(k, res)
             irc.replySuccess()
         except errs.LimitationError as e:
             irc.error("killed: {}".format(e.message()))
@@ -135,8 +140,8 @@ class Lispnoria(callbacks.Plugin):
         """<var>
 
         Delete a variable from the Lisp environment."""
-        if k in self.lisp_env:
-            del self.lisp_env[k]
+        if k in self._lisp_env:
+            del self._lisp_env[k]
             irc.replySuccess()
         else:
             irc.error("no such definition")
@@ -161,8 +166,9 @@ class Lispnoria(callbacks.Plugin):
 
     def invalidCommand(self, irc, msg, tokens):
         cmd = tokens[0]
-        if cmd in self.lisp_env:
-            f = self.lisp_env[cmd]
+        env = self.new_env(irc)
+        if cmd in env:
+            f = env[cmd]
             if callable(f):
                 qs = vals.LispSymbol('quote')
                 args = [vals.LispList([qs, vals.LispSymbol(t)])
