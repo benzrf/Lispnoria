@@ -16,17 +16,17 @@ class FakeIrc:
         self._event = threading.Event()
 
     def _set_data(self, message):
-        if isinstance(message, ircmsgs.IrcMsg) and\
-                message.command in ('PRIVMSG', 'NOTICE'):
-            parsed = parseMessage.match(message.args[1])
-            if parsed is not None:
-                message = parsed.group('content')
+        if isinstance(message, ircmsgs.IrcMsg):
+            if message.command in ('PRIVMSG', 'NOTICE'):
+                parsed = parseMessage.match(message.args[1])
+                if parsed is not None:
+                    message = parsed.group('content')
+                else:
+                    message = message.args[1]
+                self._set_data(message)
             else:
-                message = message.args[1]
-            self._set_data(message)
-        else:
-            self._irc.queueMsg(message)
-            return
+                self._irc.queueMsg(message)
+                return
         self._data = message
         self._event.set()
 
