@@ -60,7 +60,8 @@ class CommandGlobals:
     def cmd_exists(self, cmd):
         cmd = callbacks.tokenize(cmd)
         cmd = list(map(callbacks.canonicalName, cmd))
-        maxL, cbs = self.irc.findCallbacksForArgs(cmd)
+        # v  this is awful and I'm sorry  v
+        maxL, cbs = callbacks.NestedCommandsIrcProxy.findCallbacksForArgs(self, cmd)
         return maxL == cmd and len(cbs) == 1
 
     def __getitem__(self, k):

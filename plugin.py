@@ -27,7 +27,7 @@ class Lispnoria(callbacks.Plugin):
 
     def __init__(self, irc, *args, **kwargs):
         super().__init__(irc, *args, **kwargs)
-        bot_globals = parthial_ext.bot_globals(None)
+        bot_globals = parthial_ext.bot_globals(irc)
         filename = conf.supybot.directories.data.dirize('lisp_env.yaml')
         try:
             with open(filename, 'r') as f:
