@@ -1,7 +1,7 @@
 import supybot.callbacks as callbacks
 import supybot.ircutils as ircutils
 import supybot.ircmsgs as ircmsgs
-from parthial.vals import LispSymbol, LispBuiltin
+from parthial.vals import LispSymbol, LispList, LispFunc, LispBuiltin
 from parthial.errs import LimitationError
 from parthial import built_ins
 import re
@@ -91,6 +91,13 @@ class CommandGlobals:
 
 underlying = built_ins.default_globals.copy()
 underlying['cmd'] = LispBuiltin(lisp_cmd, 'cmd')
+
+@built_ins.built_in(underlying, 'src')
+def lisp_src(self, ctx, f):
+    built_ins.check_type(self, f, LispFunc, 1)
+    pars = LispList(list(map(LispSymbol, f.pars)))
+    return LispList([LispSymbol('lambda'), pars, f.body])
+
 def bot_globals(irc):
     return CommandGlobals(underlying, irc)
 
